@@ -1,6 +1,6 @@
 //
 // rsig - rioki's signal library
-// Copyright (c) 2019 Sean Farrell
+// Copyright (c) 2020 Sean Farrell
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ TEST(signal, void_signal_observe)
     rsig::signal<> void_signal;
 
     auto count = 0u;
-    void_signal.observe([&] () {
+    void_signal.connect([&] () {
         count++;
     });
 
@@ -45,7 +45,7 @@ TEST(signal, int_signal_observe)
 
     auto count = 0u;
     auto value = 0;
-    int_signal.observe([&](auto v) {
+    int_signal.connect([&](auto v) {
         count++;
         value = v;
     });
@@ -63,7 +63,7 @@ TEST(signal, string_int_signal_observe)
     auto count = 0u;
     auto value1 = std::string{};
     auto value2 = 0;
-    string_int_signal.observe([&](auto v1, auto v2) {
+    string_int_signal.connect([&](auto v1, auto v2) {
         count++;
         value1 = v1;
         value2 = v2;
@@ -81,11 +81,11 @@ TEST(signal, unobserve)
     rsig::signal<> void_signal;
 
     auto count = 0u;
-    auto c = void_signal.observe([&]() {
+    auto c = void_signal.connect([&]() {
         count++;
     });
 
-    void_signal.remove_observer(c);
+    void_signal.disconnect(c);
 
     EXPECT_EQ(0u, count);
     void_signal.emit();
@@ -99,13 +99,13 @@ TEST(signal, obverver_count)
     auto c = void_signal.emit();
     EXPECT_EQ(0u, c);
 
-    auto c1 = void_signal.observe([] () {});
-    auto c2 = void_signal.observe([]() {});
+    auto c1 = void_signal.connect([] () {});
+    auto c2 = void_signal.connect([]() {});
 
     c = void_signal.emit();
     EXPECT_EQ(2u, c);
 
-    void_signal.remove_observer(c2);
+    void_signal.disconnect(c2);
 
     c = void_signal.emit();
     EXPECT_EQ(1u, c);

@@ -1,6 +1,6 @@
 //
 // rsig - rioki's signal library
-// Copyright (c) 2019 Sean Farrell
+// Copyright (c) 2020 Sean Farrell
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,12 +31,26 @@
 
 namespace rsig
 {
+    /*!
+     * Handle to a signal / observer connection.
+     *
+     * @note The connection struct is to be considered opaque to the user.
+     */
     struct connection
     {
         size_t id = 0;
         void* signal = nullptr;
     };
 
+    /*!
+     * A thread safe signal multiplexer.
+     *
+     * @note The signal class is thread safe. You can connect, disconnect and
+     * emit from multiple threads, just keep the object alive. The thread that
+     * emits the signal is the same that will call the functions. The signal
+     * is secured by a mutex, thus it may create contention when emitting
+     * a signal with a function that runs long.
+     */
     template <typename... Args>
     class signal
     {
@@ -44,15 +58,38 @@ namespace rsig
         signal() = default;
         ~signal() = default;
 
-        connection observe(const std::function<void(Args...)>& fun);
+        /*!
+         * Connect an observer to the signal.
+         *
+         * @param fun the lambda function that will be called when emit is called.
+         * @return the connection for this observer
+         *
+         * @warning If the context, like lambda captures, lifetime is shorter
+         * than the signal, the observer must be disconnected.
+         */
+        connection connect(const std::function<void(Args...)>& fun);
 
-        void remove_observer(connection id);
+        /*!
+         * Disconnect an observer.
+         *
+         * @param id the connection returned by connect
+         */
+        void disconnect(connection id);
 
+        /*!
+         * Emit a signal.
+         *
+         * Calls all observer functions with the given arguments and returns
+         * the number of called functions.
+         *
+         * @param args the values of this signal event
+         * @return the number of called functions
+         */
         size_t emit(Args... args) const;
 
     private:
         mutable
-        std::mutex mutex;
+        std::recursive_mutex mutex;
         size_t last_id = 0;
         std::map<size_t, std::function<void (Args...)>> observers;
 
@@ -61,9 +98,9 @@ namespace rsig
     };
 
     template <typename... Args>
-    connection signal<Args...>::observe(const std::function<void(Args...)>& fun)
+    connection signal<Args...>::connect(const std::function<void(Args...)>& fun)
     {
-        std::scoped_lock<std::mutex> sl(mutex);
+        std::scoped_lock<std::recursive_mutex> sl(mutex);
         if (!fun)
         {
             throw std::invalid_argument("Signal observer is invalid.");
@@ -75,14 +112,14 @@ namespace rsig
     }
 
     template <typename... Args>
-    void signal<Args...>::remove_observer(connection id)
+    void signal<Args...>::disconnect(connection id)
     {
         if (id.signal != this)
         {
-            throw std::invalid_argument("signal::remove_observer: mismatched connection");
+            throw std::invalid_argument("signal::disconnect: mismatched connection");
         }
 
-        std::scoped_lock<std::mutex> sl(mutex);
+        std::scoped_lock<std::recursive_mutex> sl(mutex);
         auto i = observers.find(id.id);
         if (i == end(observers))
         {
@@ -94,7 +131,7 @@ namespace rsig
     template <typename... Args>
     size_t signal<Args...>::emit(Args... args) const
     {
-        std::scoped_lock<std::mutex> sl(mutex);
+        std::scoped_lock<std::recursive_mutex> sl(mutex);
         for (auto& [id, fun] : observers)
         {
             assert(fun);
