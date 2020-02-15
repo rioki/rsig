@@ -110,3 +110,52 @@ TEST(signal, obverver_count)
     c = void_signal.emit();
     EXPECT_EQ(1u, c);
 }
+
+void process_item(int) {}
+
+TEST(signal, getting_started)
+{
+    std::stringstream cout;
+    std::vector<int> items(4);
+
+    rsig::signal<unsigned int, unsigned int> processing_signal;
+
+    processing_signal.connect([&] (auto done, auto total) {
+        auto percent = static_cast<float>(done) / static_cast<float>(total) * 100.0f;
+        cout << "Handled " << done << " of " << total << " [" << percent << "%]" << std::endl;
+    });
+
+    for (auto i = 0u; i < items.size(); i++)
+    {
+        process_item(items[i]);
+        processing_signal.emit(i+1, items.size());
+    }
+
+    auto ref = "Handled 1 of 4 [25%]\n"
+               "Handled 2 of 4 [50%]\n"
+               "Handled 3 of 4 [75%]\n"
+               "Handled 4 of 4 [100%]\n";
+    EXPECT_EQ(ref, cout.str());
+}
+
+TEST(signal, life_time)
+{
+    rsig::signal<unsigned int, unsigned int> tick_signal;
+
+    processing_signal.connect([&] (auto done, auto total) {
+        auto percent = static_cast<float>(done) / static_cast<float>(total) * 100.0f;
+        cout << "Handled " << done << " of " << total << " [" << percent << "%]" << std::endl;
+        });
+
+    for (auto i = 0u; i < items.size(); i++)
+    {
+        process_item(items[i]);
+        processing_signal.emit(i+1, items.size());
+    }
+
+    auto ref = "Handled 1 of 4 [25%]\n"
+        "Handled 2 of 4 [50%]\n"
+        "Handled 3 of 4 [75%]\n"
+        "Handled 4 of 4 [100%]\n";
+    EXPECT_EQ(ref, cout.str());
+}
