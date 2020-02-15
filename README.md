@@ -24,8 +24,6 @@ Although contrived, this example shows the basic usage pattern of rsig. You
 create a signal, connect any number of observers and emit signals when ever 
 necessary.
 
-## Multi-Threading
-
 ## License
 
     rsig - rioki's signal library
