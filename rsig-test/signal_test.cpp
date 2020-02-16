@@ -24,6 +24,12 @@
 #include <functional>
 #include <gtest/gtest.h>
 #include <rsig/rsig.h>
+#include <atomic>
+#include <future>
+#include <thread>
+#include <chrono>
+
+using namespace std::literals::chrono_literals;
 
 TEST(signal, void_signal_observe)
 {
@@ -138,24 +144,83 @@ TEST(signal, getting_started)
     EXPECT_EQ(ref, cout.str());
 }
 
-TEST(signal, life_time)
+class Mouse
 {
-    rsig::signal<unsigned int, unsigned int> tick_signal;
+public:
 
-    processing_signal.connect([&] (auto done, auto total) {
-        auto percent = static_cast<float>(done) / static_cast<float>(total) * 100.0f;
-        cout << "Handled " << done << " of " << total << " [" << percent << "%]" << std::endl;
-        });
-
-    for (auto i = 0u; i < items.size(); i++)
+    rsig::signal<int, int>& get_move_signal()
     {
-        process_item(items[i]);
-        processing_signal.emit(i+1, items.size());
+        return move_signal;
     }
 
-    auto ref = "Handled 1 of 4 [25%]\n"
-        "Handled 2 of 4 [50%]\n"
-        "Handled 3 of 4 [75%]\n"
-        "Handled 4 of 4 [100%]\n";
-    EXPECT_EQ(ref, cout.str());
+    void update()
+    {
+        auto x = std::rand();
+        auto y = std::rand();
+
+        move_signal.emit(x % 2 ? -1 : 1, y % 2 ? -1 : 1);
+    }
+
+private:
+    rsig::signal<int, int> move_signal;
+};
+
+class PlayerController
+{
+public:
+    void activate(Mouse& mouse)
+    {
+        move_con = mouse.get_move_signal().connect([this] (auto x, auto y) {
+            control(x, y);
+        });
+    }
+
+    void deactivate(Mouse& mouse)
+    {
+        mouse.get_move_signal().disconnect(move_con);
+    }
+
+    void control(int x, int y)
+    {
+        u = x;
+        v = y;
+    }
+
+    std::tuple<int, int> get_uv() const
+    {
+        return std::make_tuple(u, v);
+    }
+
+private:
+    int u = 0;
+    int v = 0;
+    rsig::connection move_con;
+};
+
+TEST(signal, life_time)
+{
+    std::atomic<bool> running = true;
+    Mouse mouse;
+
+    auto f = std::async(std::launch::async, [&] () {
+        while (running)
+        {
+            mouse.update();
+        }
+    });
+
+    {
+        PlayerController ctrl;
+        ctrl.activate(mouse);
+        std::this_thread::sleep_for(10ms);
+        auto [u, v] = ctrl.get_uv();
+        EXPECT_NE(0, u);
+        EXPECT_NE(0, v);
+        ctrl.deactivate(mouse);
+    }
+    // ctrl is out of scope, so it can crash here, if the deregistration does not work well
+    std::this_thread::sleep_for(5ms);
+
+    running = false;
+    f.get();
 }

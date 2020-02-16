@@ -89,7 +89,7 @@ namespace rsig
 
     private:
         mutable
-        std::recursive_mutex mutex;
+        std::mutex mutex;
         size_t last_id = 0;
         std::map<size_t, std::function<void (Args...)>> observers;
 
@@ -100,7 +100,7 @@ namespace rsig
     template <typename... Args>
     connection signal<Args...>::connect(const std::function<void(Args...)>& fun)
     {
-        std::scoped_lock<std::recursive_mutex> sl(mutex);
+        std::scoped_lock<std::mutex> sl(mutex);
         if (!fun)
         {
             throw std::invalid_argument("Signal observer is invalid.");
@@ -119,7 +119,7 @@ namespace rsig
             throw std::invalid_argument("signal::disconnect: mismatched connection");
         }
 
-        std::scoped_lock<std::recursive_mutex> sl(mutex);
+        std::scoped_lock<std::mutex> sl(mutex);
         auto i = observers.find(id.id);
         if (i == end(observers))
         {
@@ -131,7 +131,7 @@ namespace rsig
     template <typename... Args>
     size_t signal<Args...>::emit(Args... args) const
     {
-        std::scoped_lock<std::recursive_mutex> sl(mutex);
+        std::scoped_lock<std::mutex> sl(mutex);
         for (auto& [id, fun] : observers)
         {
             assert(fun);
