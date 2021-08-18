@@ -139,6 +139,29 @@ namespace rsig
         }
         return observers.size();
     }
+
+    template<typename Class, class Ret, class... Args>
+    using method_pointer = Ret(Class::*)(Args...);
+
+    //! Member function adapter.
+    //! 
+    //! This adapter allows simple member function to work as standalone functions.
+    //!
+    //! @param that the this pointer to use
+    //! @param method the class method to call.
+    //!
+    //! Example:
+    //! @code
+    //! some_signal.connect(rsig::mem_fun(this, &MyClass::my_method));
+    //! @endcode
+    template <typename Class, typename Ret, typename... Args>
+    std::function<Ret (Args...)> mem_fun(Class* that, method_pointer<Class, Ret, Args...> method)
+    {
+        return [that, method] (Args... args) {
+            (that->*method)(args...);
+        };
+    }
 }
+
 
 #endif
