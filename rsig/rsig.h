@@ -143,8 +143,17 @@ namespace rsig
     template<typename Class, class Ret, class... Args>
     using method_pointer = Ret(Class::*)(Args...);
 
+    template<typename Class, class Ret, class... Args>
+    using method_pointer_const = Ret(Class::*)(Args...) const;
+
+    template<typename Class, class Ret, class... Args>
+    using method_pointer_ne = Ret(Class::*)(Args...) noexcept;
+
+    template<typename Class, class Ret, class... Args>
+    using method_pointer_const_ne = Ret(Class::*)(Args...) const noexcept;
+
     //! Member function adapter.
-    //! 
+    //!
     //! This adapter allows simple member function to work as standalone functions.
     //!
     //! @param that the this pointer to use
@@ -154,6 +163,7 @@ namespace rsig
     //! @code
     //! some_signal.connect(rsig::mem_fun(this, &MyClass::my_method));
     //! @endcode
+    //! @{
     template <typename Class, typename Ret, typename... Args>
     std::function<Ret (Args...)> mem_fun(Class* that, method_pointer<Class, Ret, Args...> method)
     {
@@ -161,6 +171,31 @@ namespace rsig
             (that->*method)(args...);
         };
     }
+
+    template <typename Class, typename Ret, typename... Args>
+    std::function<Ret (Args...)> mem_fun(Class* that, method_pointer_const<Class, Ret, Args...> method)
+    {
+        return [that, method] (Args... args) {
+            (that->*method)(args...);
+        };
+    }
+
+    template <typename Class, typename Ret, typename... Args>
+    std::function<Ret (Args...)> mem_fun(Class* that, method_pointer_ne<Class, Ret, Args...> method)
+    {
+        return [that, method] (Args... args) {
+            (that->*method)(args...);
+        };
+    }
+
+    template <typename Class, typename Ret, typename... Args>
+    std::function<Ret (Args...)> mem_fun(Class* that, method_pointer_const_ne<Class, Ret, Args...> method)
+    {
+        return [that, method] (Args... args) {
+            (that->*method)(args...);
+        };
+    }
+    //! @}
 }
 
 
