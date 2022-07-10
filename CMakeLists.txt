@@ -22,5 +22,5 @@ add_executable(rsig-test ${SOURCES_RSIG_TEST})
 set_target_properties(rsig-test PROPERTIES
   CXX_STANDARD 20
 )
-target_link_libraries(rsig-test PRIVATE rsig GTest::gtest)
+target_link_libraries(rsig-test PRIVATE GTest::gtest)
 add_test(rsig-test rsig-test)
