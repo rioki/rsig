@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2022-07-10
+
 ### Fixed
 
 - Improve mem_fun to acomodate const and noexcept variants.
@@ -21,3 +23,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [Unreleased]: https://github.com/rioki/rsig/commits/master
 
 [0.1.0]: https://github.com/rioki/c9y/commits/v0.1.0
+[0.1.1]: https://github.com/rioki/c9y/compare/v0.1.0...v0.1.1
