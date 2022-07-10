@@ -14,7 +14,7 @@ enable_testing()
 
 set(SOURCES_RSIG_TEST
   rsig-test/main.cpp
-  rsig-test/signal_test.cpp.cpp
+  rsig-test/signal_test.cpp
 )
 
 include_directories(.)
