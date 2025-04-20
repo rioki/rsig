@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 4.0)
 project(rsig CXX)
 
 set(CMAKE_SHARED_LIBRARY_PREFIX)
