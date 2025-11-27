@@ -86,7 +86,7 @@ namespace rsig
         connection_id                     id = 0u;
         std::weak_ptr<basic_signal_state> wstate;
 
-        void disconnect() noexcept
+        void disconnect()
         {
             if (auto state = wstate.lock())
             {
