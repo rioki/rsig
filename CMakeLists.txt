@@ -9,12 +9,13 @@ find_package(GTest CONFIG REQUIRED)
 set(HEADERS_RSIG
   rsig/rsig.h
 )
- 
+
 enable_testing()
 
 set(SOURCES_RSIG_TEST
   rsig-test/main.cpp
   rsig-test/signal_test.cpp
+  rsig-test/slot_test.cpp
 )
 
 include_directories(.)

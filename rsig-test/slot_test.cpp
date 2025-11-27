@@ -31,7 +31,7 @@ using namespace std::literals::chrono_literals;
 
 TEST(slot, do_nothing)
 {
-    rsig::slot<> s;
+    rsig::slot s;
 }
 
 TEST(slot, basic_raii_disconnect)
@@ -40,7 +40,7 @@ TEST(slot, basic_raii_disconnect)
 
     auto count = 0u;
     {
-        rsig::slot<> s = void_signal.connect([&] () {
+        rsig::slot s = void_signal.connect([&] () {
             count++;
         });
 
@@ -62,10 +62,10 @@ TEST(slot, multiple_slots)
     auto count2 = 0u;
 
     {
-        rsig::slot<> s1 = void_signal.connect([&] () {
+        rsig::slot s1 = void_signal.connect([&] () {
             count1++;
         });
-        rsig::slot<> s2 = void_signal.connect([&] () {
+        rsig::slot s2 = void_signal.connect([&] () {
             count2++;
         });
 
@@ -88,9 +88,9 @@ TEST(slot, move_semantics)
 
     auto count = 0u;
 
-    rsig::slot<> s1;
+    rsig::slot s1;
     {
-        rsig::slot<> tmp  = void_signal.connect([&] () {
+        rsig::slot tmp  = void_signal.connect([&] () {
             count++;
         });
         s1 = std::move(tmp);
@@ -113,7 +113,7 @@ TEST(slot, signal_outlives_slot)
 
     auto value = 0;
     {
-        rsig::slot<int> s = int_signal.connect([&] (auto v) {
+        rsig::slot s = int_signal.connect([&] (auto v) {
             value = v;
         });
 
@@ -130,7 +130,7 @@ TEST(slot, slot_outlives_signal)
 {
     auto value = 0;
 
-    rsig::slot<int> s;
+    rsig::slot s;
     {
         rsig::signal<int> int_signal;
 
@@ -194,7 +194,7 @@ public:
 private:
     int u = 0;
     int v = 0;
-    rsig::slot<int, int> move_slot;
+    rsig::slot move_slot;
 };
 
 TEST(slot, life_time_raii)

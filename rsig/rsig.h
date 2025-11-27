@@ -180,7 +180,6 @@ namespace rsig
     //! The slot class takes a connection and will safely disconenct from
     //! the signal, if the signal still exists. The signal and slot may have
     //! varying lifetimes and this will handle it gracefully.
-    template <typename... Args>
     class slot
     {
     public:
