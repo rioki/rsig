@@ -7,18 +7,20 @@ is create a signal, hock up a function to it and start handling events.
 
 For the start, let's take this contrived example:
 
-    rsig::signal<unsigned int, unsigned int> processing_signal;
+```cpp
+rsig::signal<unsigned int, unsigned int> processing_signal;
 
-    processing_signal.connect([&] (auto done, auto total) {
-        auto percent = static_cast<float>(done) / static_cast<float>(total) * 100.0f;
-        std::cout << "Handled " << done << " of " << total << " [" << percent << "%]" << std::endl;
-    });
+processing_signal.connect([&] (auto done, auto total) {
+    auto percent = static_cast<float>(done) / static_cast<float>(total) * 100.0f;
+    std::cout << "Handled " << done << " of " << total << " [" << percent << "%]" << std::endl;
+});
 
-    for (auto i = 0u; i < items.size(); i++)
-    {
-        process_item(items[i]);
-        processing_signal.emit(i+1, items.size());
-    }
+for (auto i = 0u; i < items.size(); i++)
+{
+    process_item(items[i]);
+    processing_signal.emit(i+1, items.size());
+}
+```
 
 Although contrived, this example shows the basic usage pattern of rsig. You
 create a signal, connect any number of observers and emit signals when ever 
@@ -29,55 +31,94 @@ necessary.
 But life is not so simple, take the following a bit less contrived example. 
 You have a mouse class, a bit like so:
 
-    class Mouse
+```cpp
+class Mouse
+{
+public:
+
+    rsig::signal<int, int>& get_move_signal()
     {
-    public:
+        return move_signal;
+    }
 
-        rsig::signal<int, int>& get_move_signal()
-        {
-            return move_signal;
-        }
+    void update()
+    {
+        // get x and y from the OS
+        move_signal.emit(x, y);
+    }
 
-        void update()
-        {
-            // get x and y from the OS
-            move_signal.emit(x, y);
-        }
-
-    private:
-        rsig::signal<int, int> move_signal;
-    };
+private:
+    rsig::signal<int, int> move_signal;
+};
+```
 
 If you want to observe the mouse motion in a game, you would write a player
 controller a bit like so:
 
-    class PlayerController
+```cpp
+class PlayerController
+{
+public:
+    void activate(Mouse& mouse)
     {
-    public:
-        void activate(Mouse& mouse)
-        {
-            move_con = mouse.get_move_signal().connect([this] (auto x, auto y) {
-                control(x, y);
-            });
-        }
+        move_con = mouse.get_move_signal().connect([this] (auto x, auto y) {
+            control(x, y);
+        });
+    }
 
-        void deactivate(Mouse& mouse)
-        {
-            mouse.get_move_signal().disconnect(move_con);
-        }
+    void deactivate(Mouse& mouse)
+    {
+        mouse.get_move_signal().disconnect(move_con);
+    }
 
-        void control(int x, int y)
-        {
-            // magic and unicorns
-        }
+    void control(int x, int y)
+    {
+        // magic and unicorns
+    }
 
-    private:
-        rsig::connection move_con;
-    };
+private:
+    rsig::connection move_con;
+};
+```
 
 The connection object is a opaque handle to the handler registration. All you
 need to do is save that handle and pass it to disconnect once you are done with 
 handling events.
+
+## Automatic Lifetime 
+
+Using the slot class you can capture the connection and make it automatically 
+disconnect. Given the above example, this would look like this:
+
+```cpp
+class PlayerController
+{
+public:
+    void activate(Mouse& mouse)
+    {
+        move_slot = mouse.get_move_signal().connect([this] (auto x, auto y) {
+            control(x, y);
+        });
+    }
+
+    void deactivate(Mouse& mouse)
+    {
+        move_slot.disconnect();
+    }
+
+    void control(int x, int y)
+    {
+        // magic and unicorns
+    }
+
+private:
+    rsig::slot move_slot;
+};
+```
+
+In this example, we are still manually disconnecting, but should for whatever reason
+deactivate never be called, the singal would still be disconnected when move_slot 
+goes out of scope.
 
 ## Thread Safety
 
