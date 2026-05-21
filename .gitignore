@@ -5,6 +5,7 @@
 # Build Output
 x86
 x64
+build
 
 # Vcpkg Folders
 vcpkg_installed
